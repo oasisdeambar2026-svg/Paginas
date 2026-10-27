@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Buscador de referencias de tubería</title>
+<style>
+:root{--bg:#f5f6f8;--surface:#fff;--text:#1d2330;--muted:#5d6676;--border:#d8dce3;--accent:#2a5fd8;--accent-text:#fff;--hover:#eef3fc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181e;--surface:#1e232b;--text:#e7eaf0;--muted:#9aa3b2;--border:#333a46;--accent:#5b8cf0;--accent-text:#0b1220;--hover:#252c38;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181e;--surface:#1e232b;--text:#e7eaf0;--muted:#9aa3b2;--border:#333a46;--accent:#5b8cf0;--accent-text:#0b1220;--hover:#252c38;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px)}
+main{max-width:980px;margin:0 auto;padding:20px 0}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--muted);font-size:.9rem;margin:0 0 18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px}
+input{width:100%;padding:10px 12px;font-size:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.hint{font-size:.75rem;color:var(--muted);margin-top:4px}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+button{padding:10px 18px;font-size:1rem;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text)}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:600}
+button:hover{filter:brightness(.97)}
+.status{margin:16px 0 8px;font-size:.92rem;color:var(--muted)}
+.error{color:#c0392b;font-size:.92rem;margin-top:10px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--bg);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--hover)}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap}
+.tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.num{text-align:right;white-space:nowrap}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Buscador de referencias de tubería</h1>
+  <p class="sub">Ingresa espesor, longitud y diámetro. Deja en blanco los campos que no quieras usar.</p>
+
+  <section class="card">
+    <div class="grid">
+      <div>
+        <label for="esp">Espesor (mm)</label>
+        <input id="esp" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 1.0">
+        <div class="hint">Tolerancia ± 0.1 mm</div>
+      </div>
+      <div>
+        <label for="lon">Longitud (mm)</label>
+        <input id="lon" type="number" step="1" min="0" inputmode="numeric" placeholder="Ej. 363">
+        <div class="hint">Tolerancia ± 1 mm</div>
+      </div>
+      <div>
+        <label for="diam">Diámetro (mm)</label>
+        <input id="diam" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 22.2">
+        <div class="hint">Tolerancia ± 0.2 mm</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnBuscar" type="button">Buscar</button>
+      <button id="btnLimpiar" type="button">Limpiar</button>
+    </div>
+    <div class="error" id="error" role="alert"></div>
+  </section>
+
+  <div class="status" id="status"></div>
+
+  <div class="table-wrap" id="resultados" hidden>
+    <table>
+      <thead>
+        <tr>
+          <th>Referencia</th>
+          <th>Pieza / descripción</th>
+          <th class="num">Longitud (mm)</th>
+          <th class="num">Diámetro (mm)</th>
+          <th class="num">Espesor (mm)</th>
+          <th>Origen</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+const DATA = {"cortes": [{"mp": "INMPTUBCR004", "mpDesc": "TUBO CR RDO Ø19.05 (3/4\") CALIBRE 1.9mm *6m", "pt": "INPTFAN00002", "ptDesc": "SOPORTE LATERAL KZKH/ BAR COMP SIDE STAND 219462", "pieza": "INBLTUBKZK03", "piezaDesc": "TUBO SOPORTE LAT KZKH (TUBO DE 19.1mm DE DIAM. t=2mm longitud 181.5mm )", "longitud": 363.0, "proceso": "Corte en angulo (Dos piezas por cada corte de 363mm)", "diamMm": 19.05, "espMm": 1.9, "calibre": null}, {"mp": "INMPTUBCR004", "mpDesc": "TUBO CR RDO Ø19.05 (3/4\") CALIBRE 1.9mm *6m", "pt": "INPTSUZ40001", "ptDesc": "CARRIER COMP SPORT GN125", "pieza": "INBLTUBGN102", "piezaDesc": "ROD, SPORT CARRIER LWR, R", "longitud": 480.0, "proceso": "doblado", "diamMm": 19.05, "espMm": 1.9, "calibre": null}, {"mp": "INMPTUBCR004", "mpDesc": "TUBO CR RDO Ø19.05 (3/4\") CALIBRE 1.9mm *6m", "pt": "INPTSUZ40001", "ptDesc": "CARRIER COMP SPORT GN125", "pieza": "INBLTUBGN103", "piezaDesc": "ROD, SPORT CARRIER LWR, L", "longitud": 480.0, "proceso": "doblado", "diamMm": 19.05, "espMm": 1.9, "calibre": null}, {"mp": "INMPTUBCR004", "mpDesc": "TUBO CR RDO Ø19.05 (3/4\") CALIBRE 1.9mm *6m", "pt": "INPTSUZ40001", "ptDesc": "CARRIER COMP SPORT GN125", "pieza": "INBLTUBGN101", "piezaDesc": "ROD, SPORT CARRIER UPPER", "longitud": 1180.0, "proceso": "doblado", "diamMm": 19.05, "espMm": 1.9, "calibre": null}, {"mp": "INMPTUBCR005", "mpDesc": "TUBO CR RDO Ø7/8 (2mm) CALIDAD ESTRUCTURAL", "pt": "INPTSUZ20001", "ptDesc": "HANDLEBAR", "pieza": "INBLTUBMGX01", "piezaDesc": "TUBO MANUBRIO GIXXER TUBO CR RDO 7/8 (2 mm) CALIDAD ESTRUCTURALDE 817mm de long", "longitud": 817.0, "proceso": "Chaflanado", "diamMm": 22.22, "espMm": 2.0, "calibre": null}, {"mp": "INMPTUBHR001", "mpDesc": "TUBO HR ESTRUCTURAL RDO Ø7/8 Cal 13", "pt": "INPTFAN00008", "ptDesc": "PEDAL BRAKE K92", "pieza": "INBLTUBK9201", "piezaDesc": "TUBO PIPE BRAKE K92 Long 460mm", "longitud": 455.0, "proceso": "Doblado", "diamMm": 22.22, "espMm": null, "calibre": "C13"}, {"mp": "INMPTUBCR012", "mpDesc": "TUBO ASTM A512 Ø28.6 x t1.2mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL08", "piezaDesc": "JT 1 (BBL-E475R-00) TUBO ASTM A513 DIAMETRO 28.6 x t1.2 mm", "longitud": 64.0, "proceso": null, "diamMm": 28.6, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN010", "mpDesc": "TUBO SUS 409L Ø19.1 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C09", "piezaDesc": "PIPE, TAIL 18310-K3C-D100-23 TUBO SUS 409L DIAMETRO 19.1 x t1.0 mm", "longitud": 232.0, "proceso": "Ninguno", "diamMm": 19.1, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN010", "mpDesc": "TUBO SUS 409L Ø19.1 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C06", "piezaDesc": "PIPE FR 18320-K3C-D100-22 TUBO SUS 409L DIAMETRO 19.1 x t1.0 mm", "longitud": 130.0, "proceso": "Expansora", "diamMm": 19.1, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN010", "mpDesc": "TUBO SUS 409L Ø19.1 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5209", "piezaDesc": "PIPE, END 18310-KYY-9000-27 TUBO SUS 409L DIAMETRO 19.1 x t1.0 mm", "longitud": 100.0, "proceso": "Ninguno", "diamMm": 19.1, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C08", "piezaDesc": "PIPE, RR 18320-K3C-D100-24 TUBO SUS 409L DIAMETRO 22.2 x t1.0 mm", "longitud": 595.0, "proceso": null, "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C05", "piezaDesc": "PIPE A 18310-K3C-D100-28 TUBO SUS 409L DIAMETRO 22.2 x t1.0 mm", "longitud": 326.0, "proceso": null, "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5208", "piezaDesc": "PIPE A, INNER 18310-KYY-9000-25 TUBO SUS 409L DIAMETRO 22.2 x t1.0 mm", "longitud": 150.0, "proceso": "Ninguno", "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C07", "piezaDesc": "PIPE, PASS 18310-K3C-D100-22 TUBO SUS 409L DIAMETRO 22.2 x t1.0 mm", "longitud": 100.0, "proceso": null, "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5210", "piezaDesc": "PIPE B, INNER 18310-KYY-9000-35 (TUBO SUS 409L DIAMETRO 22.2 x t1.0 mm)", "longitud": 60.0, "proceso": "Ninguno", "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTINC10005", "ptDesc": "MOFLE BUB", "pieza": "INBLTUBBUB05", "piezaDesc": "PIPE TAIL", "longitud": 299.0, "proceso": "Doblado", "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN002", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C03", "piezaDesc": "CONE, FR 18320-K3C-D100-26 TUBO SUS 409L Ø 22.2 x t1.0 mm", "longitud": 42.0, "proceso": null, "diamMm": 22.2, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN001", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.2 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7904", "piezaDesc": "PIPE, INNER B 18310-K79-E000-25 (TUBO SUS 409L DIAMETRO 22.2 x t1.2 mm)", "longitud": 150.0, "proceso": "Ninguno", "diamMm": 22.2, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN001", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL01", "piezaDesc": "BODY PIPE 1-1 (BBL-E461A-00) TUBO SUS 409L DIAMETRO 22.2 x t1.2 mm", "longitud": 536.0, "proceso": null, "diamMm": 22.2, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN001", "mpDesc": "TUBO SUS 409L Ø22.2 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL06", "piezaDesc": "PIPE 5 (BBL-E475H-00) TUBO SUS 409L DIAMETRO 22,2 x t1.2 mm", "longitud": 145.0, "proceso": null, "diamMm": 22.2, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5207", "piezaDesc": "PIPE, INNER B 18320-K52-9200-20 TUBO SUS 409L DIAMETRO 25.4 x t1.0 mm", "longitud": 400.0, "proceso": "Doblado Punzonado en troqueladora", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7901", "piezaDesc": "PIPE 18312-K79-E000-22 (TUBO SUS 409L DIAMETRO 25.4 x t1.2 mm)", "longitud": 172.0, "proceso": "Conformado en prensa", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7903", "piezaDesc": "PIPE, INNER A 18310-K79-E000-24 (TUBO SUS 409L DIAMETRO 25.4 x t1.2 mm)", "longitud": 75.0, "proceso": "Conformado en troqueladora", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH02", "piezaDesc": "PIPE, INNER B (TUBO SUS 409L DIAMETRO 25.4 x t1.2 mm)", "longitud": 71.5, "proceso": "Ninguno", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C04", "piezaDesc": "CONE, RR 18320-K3C-D100-27", "longitud": 63.0, "proceso": "Expansion", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN009", "mpDesc": "TUBO SUS 409L Ø25.4 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C02", "piezaDesc": "COLLAR, INNER 18320-K3C-D100-29", "longitud": 14.0, "proceso": "Ninguno", "diamMm": 25.4, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN006", "mpDesc": "TUBO SUS 409L Ø25,4 x t1.2 mm", "pt": "INPTINC10005", "ptDesc": "MOFLE BUB", "pieza": "INBLTUBBUB01", "piezaDesc": "PIPE EXT 1", "longitud": 338.0, "proceso": "Doblado", "diamMm": 25.4, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN008", "mpDesc": "TUBO SUS 409L Ø28.6 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5204", "piezaDesc": "PIPE, INNER A 18320-KYY-9000-21 TUBO SUS 409L DIAMETRO 28.6 x t1.0 mm", "longitud": 500.0, "proceso": "Ahusado", "diamMm": 28.6, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN008", "mpDesc": "TUBO SUS 409L Ø28.6 x t1.0 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH01", "piezaDesc": "PIPE, INNER A (TUBO SUS 409L DIAMETRO 28.6 x t1.2 mm)", "longitud": 200.0, "proceso": "Conformado en troqueladora", "diamMm": 28.6, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN008", "mpDesc": "TUBO SUS 409L Ø28.6 x t1.0 mm", "pt": "INPTINC10005", "ptDesc": "MOFLE BUB", "pieza": "INBLTUBBUB04", "piezaDesc": "PIPE 1-1", "longitud": 181.0, "proceso": "Troquelado", "diamMm": 28.6, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN008", "mpDesc": "TUBO SUS 409L Ø28.6 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5206", "piezaDesc": "Joint C K52 TUBO SUS 409L DIAMETRO 28.6 x t1.0 mm", "longitud": 39.0, "proceso": "Expansion en expansora", "diamMm": 28.6, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN006", "mpDesc": "TUBO SUS 409L Ø28.6 x t1.2 mm", "pt": "INPTINC10005", "ptDesc": "MOFLE BUB", "pieza": "INBLTUBBUB02", "piezaDesc": "PIPE EXT 2", "longitud": 170.0, "proceso": "Doblado en troquel", "diamMm": 28.6, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH04", "piezaDesc": "PIPE TAIL (TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm)", "longitud": 340.0, "proceso": "doblado", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7905", "piezaDesc": "PIPE, FR 18310-K79-E000-23 (TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm)", "longitud": 325.0, "proceso": "Doblado perforado en matriz", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTFAN10006", "ptDesc": "EXHOSTO TERMINADO XR190L K79K", "pieza": "INBLTUBK7909", "piezaDesc": "PIPE, FR 18310-K79K (TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm)", "longitud": 314.0, "proceso": "Doblado perforado en matriz", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL04", "piezaDesc": "PIPE 1 (BBL-E475A-00) TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm", "longitud": 290.0, "proceso": null, "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH03", "piezaDesc": "MOUTH PEACE 28,6 (TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm)", "longitud": 63.0, "proceso": "Conformado en prensa hca Despunte en troqueladora", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTINC10005", "ptDesc": "MOFLE BUB", "pieza": "INBLTUBBUB03", "piezaDesc": "PIPE EXHAUST 3", "longitud": 231.0, "proceso": "Ahusado", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN004", "mpDesc": "TUBO SUS 409L Ø31.8 x t1.2 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7906", "piezaDesc": "MOUTH PIECE 25.4 18319-K79-E000-H1 (TUBO SUS 409L DIAMETRO 31.8 x t1.2 mm)", "longitud": 57.0, "proceso": "Conformado en prensa Despunte en troqueladora", "diamMm": 31.8, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN007", "mpDesc": "TUBO SUS 409L Ø35 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5203", "piezaDesc": "PIPE OUTER A 18320-KYY-9000-20 TUBO SUS 409L DIAMETRO 35 x t1.0 mm", "longitud": 488.0, "proceso": "Ahusado Doblado", "diamMm": 35.0, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN007", "mpDesc": "TUBO SUS 409L Ø35 x t1.0 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL05", "piezaDesc": "PIPE 4 (BBL-E475G-00) TUBO SUS 409L DIAMETRO 35 x t1.0 mm", "longitud": 102.5, "proceso": null, "diamMm": 35.0, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN007", "mpDesc": "TUBO SUS 409L Ø35 x t1.0 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH06", "piezaDesc": "CAP, CAT FR (TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm)", "longitud": 39.5, "proceso": "Expansion en expansora", "diamMm": 35.0, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN007", "mpDesc": "TUBO SUS 409L Ø35 x t1.0 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5205", "piezaDesc": "Joint B K52 TUBO SUS 409L DIAMETRO 35 x t1.0 mm", "longitud": 27.0, "proceso": "Expansion en expansora", "diamMm": 35.0, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN007", "mpDesc": "TUBO SUS 409L Ø35 x t1.0 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7907", "piezaDesc": "JOINT PIPE (TUBO SUS 409L DIAMETRO 35 x t1.0 mm)", "longitud": 25.0, "proceso": "Conformado en prensa", "diamMm": 35.0, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTFAN10002", "ptDesc": "EXHOSTO TERMINADO XR190L K79G/MUFFLER COMP 290691", "pieza": "INBLTUBK7902", "piezaDesc": "PIPE OUTER 18312-K79-E000-21 (TUBO SUS 436L DIAMETRO 38.1 x t1.2 mm)", "longitud": 126.0, "proceso": "Conformado en prensa", "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTFAN10003", "ptDesc": "EXHOSTO TERMINADO XR150L KRHR/MUFFLER COMP 290692", "pieza": "INBLTUBKRH08", "piezaDesc": "PIPE OUTER (TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm)", "longitud": 116.5, "proceso": "Conformado en troqueladora", "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5201", "piezaDesc": "JOINT A K52 TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm", "longitud": 57.0, "proceso": null, "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL02", "piezaDesc": "BODY, PIPE 1-2 (BBL-E461E-00) TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm", "longitud": 390.0, "proceso": null, "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL07", "piezaDesc": "PIPE 7 (BBL-E475K-00) TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm", "longitud": 150.0, "proceso": null, "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTINC10001", "ptDesc": "EXHOSTO BBL", "pieza": "INBLTUBBBL03", "piezaDesc": "BODY 1-1 (BBL-E471A-00)TUBO SUS 409L DIAMETRO 38.1 x t1.2 mm", "longitud": 77.0, "proceso": null, "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN003", "mpDesc": "TUBO SUS 409L Ø38.1 x t1.2 mm", "pt": "INPTFAN10006", "ptDesc": "EXHOSTO TERMINADO XR190L K79K", "pieza": "INBLTUBK7908", "piezaDesc": "CONE RR K79K", "longitud": 38.0, "proceso": "Expansion", "diamMm": 38.1, "espMm": 1.2, "calibre": null}, {"mp": "INMPTUBIN011", "mpDesc": "TUBO SUS 409L Ø48.6 x t1.0 mm", "pt": "INPTFAN10005", "ptDesc": "EXHOSTO K3CA /MUFFLER ASSY", "pieza": "INBLTUBK3C01", "piezaDesc": "CASE, CAT 18320-K3C-D100-23 TUBO SUS 409L DIAMETRO 48.6 x t1.0 mm", "longitud": 146.0, "proceso": "Ninguno", "diamMm": 48.6, "espMm": 1.0, "calibre": null}, {"mp": "INMPTUBIN014", "mpDesc": "TUBO INOX 304 Ø50.8 x t1.2 mm", "pt": "INPTFAN10001", "ptDesc": "EXHOSTO TERMINADO CB125F K52/MUFFLER ASSY", "pieza": "INBLTUBK5202", "piezaDesc": "PIPE, OUTER B 18320-K52-9200-21 TUBO 304 ST 2\" X 1.2 MM", "longitud": 195.0, "proceso": "Expansion en expansora Marcado y perforado", "diamMm": 50.8, "espMm": 1.2, "calibre": null}], "longitudes": [{"material": "TUBO SUS 409L Ø22.2 x t1.0", "item": "INCOTUBD2401", "ref": "Body Pipe 1-1", "longitud": 464.0, "diamMm": 22.2, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø25.4 x t1.0", "item": "INCOTUBD2402", "ref": "Body Pipe 3-1", "longitud": 463.0, "diamMm": 25.4, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø25.4 x t1.0", "item": "INCOTUBD2403", "ref": "Pipe ext 4", "longitud": 227.0, "diamMm": 25.4, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø25.4 x t1.0", "item": "INCOTUBD2404", "ref": "Pipe 1-1", "longitud": 100.0, "diamMm": 25.4, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø25.4 x t1.0", "item": "INCOTUBD2405", "ref": "Pipe Tail", "longitud": 50.0, "diamMm": 25.4, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø38,1x t1,2", "item": "INCOTUBD2406", "ref": "JT EXT 2", "longitud": 42.0, "diamMm": 38.1, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø22.2 x t1.2", "item": "INCOTUBK6505", "ref": "Pipe B", "longitud": 358.0, "diamMm": 22.2, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø22.2 x t1.2", "item": "INCOTUBK6503", "ref": "Cone FR", "longitud": 42.0, "diamMm": 22.2, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø25.4 x t1.2", "item": "INCOTUBK6504", "ref": "Cone RR", "longitud": 50.0, "diamMm": 25.4, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø25.4 x t1.2", "item": "INCOTUBk6507", "ref": "Pipe C", "longitud": 136.0, "diamMm": 25.4, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø19.1 x t1.2", "item": "INCOTUBK6502", "ref": "Pipe A", "longitud": 218.0, "diamMm": 19.1, "espMm": 1.2}, {"material": "TUBO SUS 409L Ø22.2 x t1.0", "item": "INCOTUBK6501", "ref": "Pipe Tail", "longitud": 85.0, "diamMm": 22.2, "espMm": 1.0}, {"material": "TUBO SUS 409L Ø31.8 x t1,2", "item": "INCOTUBK6508", "ref": "Pipe A, Inner", "longitud": 50.0, "diamMm": 31.8, "espMm": 1.2}]};
+
+const $ = id => document.getElementById(id);
+const TOL = { esp: 0.1, lon: 1, diam: 0.2 };
+
+function leer(id) {
+  const v = $(id).value.trim();
+  if (v === '') return null;
+  const n = Number(v.replace(',', '.'));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function cerca(valor, objetivo, tol) {
+  return valor !== null && valor !== undefined && Math.abs(valor - objetivo) <= tol + 1e-9;
+}
+
+function filas() {
+  const cortes = DATA.cortes.map(c => ({
+    ref: c.mp, pieza: c.pieza, desc: c.piezaDesc || c.ptDesc || '',
+    lon: c.longitud, diam: c.diamMm, esp: c.espMm, origen: 'Hoja de cortes'
+  }));
+  const longs = DATA.longitudes.map(l => ({
+    ref: l.item, pieza: l.ref || '', desc: l.material || '',
+    lon: l.longitud, diam: l.diamMm, esp: l.espMm, origen: 'Longitud de tubería'
+  }));
+  return cortes.concat(longs);
+}
+
+function buscar() {
+  $('error').textContent = '';
+  const esp = leer('esp'), lon = leer('lon'), diam = leer('diam');
+
+  if ([esp, lon, diam].some(v => Number.isNaN(v))) {
+    $('error').textContent = 'Revisa los valores: deben ser números.';
+    return;
+  }
+  if (esp === null && lon === null && diam === null) {
+    $('error').textContent = 'Ingresa al menos un valor para buscar.';
+    return;
+  }
+
+  const res = filas().filter(f =>
+    (esp === null || cerca(f.esp, esp, TOL.esp)) &&
+    (lon === null || cerca(f.lon, lon, TOL.lon)) &&
+    (diam === null || cerca(f.diam, diam, TOL.diam))
+  );
+
+  mostrar(res);
+}
+
+function mostrar(res) {
+  const tbody = $('tbody');
+  tbody.innerHTML = '';
+  $('resultados').hidden = false;
+
+  if (res.length === 0) {
+    $('status').textContent = '';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No se encontraron referencias con esos valores.</td></tr>';
+    return;
+  }
+
+  $('status').textContent = res.length === 1 ? '1 resultado' : res.length + ' resultados';
+  const fmt = v => (v === null || v === undefined) ? '—' : v;
+
+  for (const f of res) {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td class="code"></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td><span class="tag"></span></td>`;
+    const t = tr.children;
+    t[0].textContent = f.ref || '—';
+    t[1].innerHTML = '';
+    const pieza = document.createElement('div');
+    pieza.className = 'code';
+    pieza.textContent = f.pieza || '';
+    const d = document.createElement('div');
+    d.textContent = f.desc;
+    t[1].append(pieza, d);
+    t[2].textContent = fmt(f.lon);
+    t[3].textContent = fmt(f.diam);
+    t[4].textContent = fmt(f.esp);
+    t[5].firstChild.textContent = f.origen;
+    tbody.appendChild(tr);
+  }
+}
+
+function limpiar() {
+  ['esp', 'lon', 'diam'].forEach(id => $(id).value = '');
+  $('error').textContent = '';
+  $('status').textContent = '';
+  $('resultados').hidden = true;
+  $('tbody').innerHTML = '';
+  $('esp').focus();
+}
+
+$('btnBuscar').addEventListener('click', buscar);
+$('btnLimpiar').addEventListener('click', limpiar);
+['esp', 'lon', 'diam'].forEach(id =>
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') buscar(); })
+);
+</script>
+</body>
+</html>
