@@ -3,66 +3,276 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Buscador de referencias de tubería</title>
+<title>Buscador de Referencias de Tubería | Panel Gerencial</title>
 <style>
-:root{--bg:#f5f6f8;--surface:#fff;--text:#1d2330;--muted:#5d6676;--border:#d8dce3;--accent:#2a5fd8;--accent-text:#fff;--hover:#eef3fc;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181e;--surface:#1e232b;--text:#e7eaf0;--muted:#9aa3b2;--border:#333a46;--accent:#5b8cf0;--accent-text:#0b1220;--hover:#252c38;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15181e;--surface:#1e232b;--text:#e7eaf0;--muted:#9aa3b2;--border:#333a46;--accent:#5b8cf0;--accent-text:#0b1220;--hover:#252c38;color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px)}
-main{max-width:980px;margin:0 auto;padding:20px 0}
-h1{font-size:1.4rem;margin:0 0 4px}
-.sub{color:var(--muted);font-size:.9rem;margin:0 0 18px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px}
-input{width:100%;padding:10px 12px;font-size:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
-input:focus{outline:2px solid var(--accent);outline-offset:1px}
-.hint{font-size:.75rem;color:var(--muted);margin-top:4px}
-.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-button{padding:10px 18px;font-size:1rem;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text)}
-button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:600}
-button:hover{filter:brightness(.97)}
-.status{margin:16px 0 8px;font-size:.92rem;color:var(--muted)}
-.error{color:#c0392b;font-size:.92rem;margin-top:10px}
-.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
-th{background:var(--bg);font-weight:600;white-space:nowrap}
-tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--hover)}
-.code{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap}
-.tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
-.num{text-align:right;white-space:nowrap}
-.empty{padding:28px;text-align:center;color:var(--muted)}
+  :root {
+    --bg: #0b0f19;
+    --surface: #151c2c;
+    --surface-card: #1a233a;
+    --border: #2a364f;
+    --border-focus: #3b82f6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-glow: rgba(59, 130, 246, 0.25);
+    --error: #ef4444;
+    --hover-row: #202b42;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-primary);
+    padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 20px);
+    min-height: 100vh;
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+  }
+
+  .sub {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-card);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 12px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--surface-card);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    background: var(--border);
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  button.primary:hover {
+    background: var(--accent-hover);
+  }
+
+  .status {
+    margin: 20px 0 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+
+  .error {
+    color: var(--error);
+    font-size: 0.88rem;
+    margin-top: 12px;
+    font-weight: 500;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  th {
+    background: var(--surface-card);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr {
+    transition: background-color 0.15s ease;
+  }
+
+  tbody tr:hover {
+    background: var(--hover-row);
+  }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 600;
+    color: #60a5fa;
+    white-space: nowrap;
+  }
+
+  .pieza-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .pieza-desc {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface-card);
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .empty {
+    padding: 36px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>Buscador de referencias de tubería</h1>
-  <p class="sub">Ingresa espesor, longitud y diámetro. Deja en blanco los campos que no quieras usar.</p>
+  <div class="header">
+    <h1>🔍 Buscador de Referencias de Tubería</h1>
+    <p class="sub">Ingresa longitud, diámetro y espesor. Deja en blanco los campos opcionales.</p>
+  </div>
 
   <section class="card">
     <div class="grid">
-      <div>
-        <label for="esp">Espesor (mm)</label>
-        <input id="esp" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 1.0">
-        <div class="hint">Tolerancia ± 0.1 mm</div>
-      </div>
-      <div>
+      <!-- 1. Longitud -->
+      <div class="input-group">
         <label for="lon">Longitud (mm)</label>
         <input id="lon" type="number" step="1" min="0" inputmode="numeric" placeholder="Ej. 363">
         <div class="hint">Tolerancia ± 1 mm</div>
       </div>
-      <div>
+      <!-- 2. Diámetro -->
+      <div class="input-group">
         <label for="diam">Diámetro (mm)</label>
         <input id="diam" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 22.2">
         <div class="hint">Tolerancia ± 0.2 mm</div>
       </div>
+      <!-- 3. Espesor -->
+      <div class="input-group">
+        <label for="esp">Espesor (mm)</label>
+        <input id="esp" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 1.0">
+        <div class="hint">Tolerancia ± 0.1 mm</div>
+      </div>
     </div>
     <div class="actions">
-      <button class="primary" id="btnBuscar" type="button">Buscar</button>
-      <button id="btnLimpiar" type="button">Limpiar</button>
+      <button class="primary" id="btnBuscar" type="button">Buscar Referencias</button>
+      <button id="btnLimpiar" type="button">Limpiar Campos</button>
     </div>
     <div class="error" id="error" role="alert"></div>
   </section>
@@ -73,11 +283,11 @@ tbody tr:hover{background:var(--hover)}
     <table>
       <thead>
         <tr>
-          <th>Referencia</th>
-          <th>Pieza / descripción</th>
-          <th class="num">Longitud (mm)</th>
-          <th class="num">Diámetro (mm)</th>
-          <th class="num">Espesor (mm)</th>
+          <th>Referencia MP</th>
+          <th>Pieza / Descripción</th>
+          <th class="num">Longitud</th>
+          <th class="num">Diámetro</th>
+          <th class="num">Espesor</th>
           <th>Origen</th>
         </tr>
       </thead>
@@ -120,11 +330,11 @@ function buscar() {
   const esp = leer('esp'), lon = leer('lon'), diam = leer('diam');
 
   if ([esp, lon, diam].some(v => Number.isNaN(v))) {
-    $('error').textContent = 'Revisa los valores: deben ser números.';
+    $('error').textContent = 'Revisa los valores: deben ser números válidos.';
     return;
   }
   if (esp === null && lon === null && diam === null) {
-    $('error').textContent = 'Ingresa al menos un valor para buscar.';
+    $('error').textContent = 'Ingresa al menos un valor para realizar la búsqueda.';
     return;
   }
 
@@ -144,46 +354,67 @@ function mostrar(res) {
 
   if (res.length === 0) {
     $('status').textContent = '';
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No se encontraron referencias con esos valores.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No se encontraron coincidencias en la base de datos.</td></tr>';
     return;
   }
 
-  $('status').textContent = res.length === 1 ? '1 resultado' : res.length + ' resultados';
-  const fmt = v => (v === null || v === undefined) ? '—' : v;
+  $('status').textContent = res.length === 1 ? '1 registro encontrado' : `${res.length} registros encontrados`;
+  const fmt = v => (v === null || v === undefined) ? '—' : `${v} mm`;
 
   for (const f of res) {
     const tr = document.createElement('tr');
-    tr.innerHTML =
-      `<td class="code"></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td><span class="tag"></span></td>`;
-    const t = tr.children;
-    t[0].textContent = f.ref || '—';
-    t[1].innerHTML = '';
-    const pieza = document.createElement('div');
-    pieza.className = 'code';
-    pieza.textContent = f.pieza || '';
-    const d = document.createElement('div');
-    d.textContent = f.desc;
-    t[1].append(pieza, d);
-    t[2].textContent = fmt(f.lon);
-    t[3].textContent = fmt(f.diam);
-    t[4].textContent = fmt(f.esp);
-    t[5].firstChild.textContent = f.origen;
+    
+    const tdRef = document.createElement('td');
+    tdRef.className = 'code';
+    tdRef.textContent = f.ref || '—';
+
+    const tdDesc = document.createElement('td');
+    if (f.pieza) {
+      const pTitle = document.createElement('div');
+      pTitle.className = 'pieza-title code';
+      pTitle.textContent = f.pieza;
+      tdDesc.appendChild(pTitle);
+    }
+    const pSub = document.createElement('div');
+    pSub.className = 'pieza-desc';
+    pSub.textContent = f.desc;
+    tdDesc.appendChild(pSub);
+
+    const tdLon = document.createElement('td');
+    tdLon.className = 'num';
+    tdLon.textContent = fmt(f.lon);
+
+    const tdDiam = document.createElement('td');
+    tdDiam.className = 'num';
+    tdDiam.textContent = fmt(f.diam);
+
+    const tdEsp = document.createElement('td');
+    tdEsp.className = 'num';
+    tdEsp.textContent = fmt(f.esp);
+
+    const tdOrigen = document.createElement('td');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = f.origen;
+    tdOrigen.appendChild(tag);
+
+    tr.append(tdRef, tdDesc, tdLon, tdDiam, tdEsp, tdOrigen);
     tbody.appendChild(tr);
   }
 }
 
 function limpiar() {
-  ['esp', 'lon', 'diam'].forEach(id => $(id).value = '');
+  ['lon', 'diam', 'esp'].forEach(id => $(id).value = '');
   $('error').textContent = '';
   $('status').textContent = '';
   $('resultados').hidden = true;
   $('tbody').innerHTML = '';
-  $('esp').focus();
+  $('lon').focus();
 }
 
 $('btnBuscar').addEventListener('click', buscar);
 $('btnLimpiar').addEventListener('click', limpiar);
-['esp', 'lon', 'diam'].forEach(id =>
+['lon', 'diam', 'esp'].forEach(id =>
   $(id).addEventListener('keydown', e => { if (e.key === 'Enter') buscar(); })
 );
 </script>
